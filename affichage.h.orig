@@ -1,0 +1,104 @@
+#pragma once
+
+#include "trading.h"
+
+// Classe Bougie : Element de base de graphe en Chandelier
+// Une Bougie représente UN CoursOHLC
+/* AMELIORATION POSSIBLES:
+    - Utiliser le signal hovered() de QCandlestickSet quand on passe la souris sur une bougie pour afficher qqch (sa date ? sa forme ?)
+*/
+
+class Bougie : public QCandlestickSet { // La bougie hérite de la classe QCandlestickSet
+    Q_OBJECT
+    CoursOHLC* cours; // Le cours que représente la bougie
+    QString forme;
+public:
+    Bougie(qreal open, qreal high, qreal low, qreal close, CoursOHLC* c, qreal timestamp = 0.0, QObject *parent = nullptr):
+        QCandlestickSet(open, high, low, close, timestamp, parent), cours(c){
+        connect(this,SIGNAL(clicked()),this, SLOT(viewCoursOHLC())); // Permet quand on clique sur la bougie d'appeller le slot de CSVViewer permettant d'afficher les données de la bougie dans des QLineEdit
+        forme = calculForme();
+    }
+    const CoursOHLC& getCoursOHLC() const { return *cours; }
+<<<<<<< HEAD
+
+=======
+    QString calculForme() const ; // Permet de définir la forme de la bougie (sera appellée dans le constructeur)
+    const QString getForme() const { return forme; }
+>>>>>>> 1cf931b23c3fc94f73379d27f97ffadbfa1effc6
+signals:
+    void clickBougie(Bougie* c);
+private slots:
+    void viewCoursOHLC(){ emit clickBougie(this); }
+};
+
+// Classe CSVViewer : Contenant les graphes et données
+
+class CSVViewer : public QWidget{
+    Q_OBJECT
+
+    // GRAPHE
+    QCandlestickSeries *series; // un ensemble de bougies
+    QBarSeries *barseries; // Un ensemble de barre de volume
+    QChart *graphe_haut; // un graphique sur un ensemble de bougies
+    QChart *graphe_bas; // un graphique pour le volume
+    QChartView *chartView_haut; // un viewer pour le 1er graphique
+    QChartView *chartView_bas; // un viewer pour le 2e graphique
+
+    // LINE TEXT & LABEL
+    QLineEdit* open; // barres d’édition
+    QLineEdit* high;
+    QLineEdit* low;
+    QLineEdit* close;
+    QLineEdit* date;
+    QLineEdit* forme;
+    QLabel* openl; // labels
+    QLabel* highl;
+    QLabel* lowl;
+    QLabel* closel;
+    QLabel* datel;
+    QLabel* formel;
+
+    // BOUTONS GENERAUX
+    QPushButton* rechercheForme; // bouton permettant de lancer la recherche d'une forme de bougie particulière
+    // Il faudra faire une nouvelle fenêtre avec un QComboBox des différentes formes connues afin de laisser l'utilisateur voir la bougie qui l'intéresse.
+    // On créera alors une série de bougie ne contenant que les bougies correspondant à cette description, qui sera affichée sur le graphe.
+    QPushButton* quitter; // bouton pour revenir au menu
+    QPushButton* details; // bouton pour zoomer sur le graphe
+    // BOUTONS VUE DETAILS
+    QPushButton* gauche; // bouton pour passer à l'échantillon suivant de eCSV
+    QPushButton* droite; // bouton pour passer à l'échantillon précédent de eCSV
+
+    // LAYOUT
+    QHBoxLayout* copen; // couches de placement
+    QHBoxLayout* chigh;
+    QHBoxLayout* clow;
+    QHBoxLayout* cclose;
+    QHBoxLayout* cdate;
+    QHBoxLayout* cforme;
+    QHBoxLayout* fleches;
+    QVBoxLayout* partieDroite; // Contiendra en vertical les Label/LineEdit/Boutons
+    QVBoxLayout* partieGauche; // Contiendra les 2 graphes
+    QHBoxLayout* fenetre; // Layout Principal / Final
+    // 1 seul layout: le Candlestick à gauche et le Graphique en Barre à droite puis un bouton quitte
+
+    // DONNEES
+    EvolutionCours *eCSV; // Sert à stocker l'evolutionCours général passé en paramètre de la création de l'objet, notamment afin de le parcourir pour la vue en détails
+    EvolutionCours *sous_eCSV = nullptr; // Sera une sous partie de eCSV pour la vue en détails. Seulement 30 coursOHLC y seront contenu.
+    unsigned int nbCoursDetails = 30; // Permet de changer le nombre de coursOHLC affichés dans la vue en détails.
+    unsigned int part = 0; // Facteur utilisé lors de la modification des graphes pour savoir quelle partie des données affichées
+    // "part" servira de facteur multiplicatif pour savoir quel 30-aine de coursOHLC affectée à sous_eCSV
+
+    // AMITIE
+    friend class Bougie;
+    friend class EvolutionCours;
+
+public:
+    explicit CSVViewer(EvolutionCours *e, QWidget *parent);
+private slots:
+    // Permet d'envoyer les infos de la bougie cliquée
+    void viewCoursOHLC(Bougie* c);
+    void vueDetails();
+    void vueGlobale();
+    void suivant();
+    void precedent();
+};
